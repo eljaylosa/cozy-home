@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -7,11 +7,45 @@ import ScrollReveal from "./components/ScrollReveal";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
+import GetStarted from "./pages/GetStarted";
+import EmailTest from "./pages/EmailTest";
+import Dashboard from "./pages/Dashboard";
+
+import { useAuth } from "./context/AuthContext";
 
 import "./App.css";
 
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-cozy-cream">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-cozy-sage/30 border-t-cozy-sage-dark" />
+          <p className="mt-4 text-sm font-medium text-cozy-brown/70">
+            Preparing your cozy home...
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/get-started" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   const location = useLocation();
+
+  const isAuthPage = location.pathname === "/get-started";
+  const isEmailTestPage = location.pathname === "/dev/email-test";
+  const isDashboardPage = location.pathname === "/dashboard";
+
+  const isStandalonePage = isAuthPage || isEmailTestPage || isDashboardPage;
 
   useEffect(() => {
     window.scrollTo({
@@ -22,36 +56,53 @@ function App() {
 
   return (
     <>
-      <ScrollReveal />
-      <Navbar />
+      {!isStandalonePage && <ScrollReveal />}
+      {!isStandalonePage && <Navbar />}
+
       <div key={location.pathname} className="page-transition">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/get-started" element={<GetStarted />} />
 
           <Route
-            path="/get-started"
+            path="/dashboard"
             element={
-              <main className="placeholder-page">
-                <span className="section-kicker">COMING SOON</span>
-                <h1>Your cozy adventure starts here.</h1>
-                <p>We're preparing something special for you.</p>
-              </main>
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dev/email-test"
+            element={
+              import.meta.env.DEV ? (
+                <EmailTest />
+              ) : (
+                <main className="flex min-h-screen items-center justify-center bg-cozy-cream">
+                  <h1 className="font-serif text-3xl text-cozy-dark">
+                    Page not found.
+                  </h1>
+                </main>
+              )
             }
           />
 
           <Route
             path="*"
             element={
-              <main className="placeholder-page">
-                <h1>Oops! This page doesn't exist.</h1>
+              <main className="flex min-h-[70vh] flex-col items-center justify-center bg-cozy-cream px-5 text-center">
+                <h1 className="font-serif text-4xl font-semibold text-cozy-dark">
+                  Oops! This page doesn't exist.
+                </h1>
               </main>
             }
           />
         </Routes>
       </div>
 
-      <Footer />
+      {!isStandalonePage && <Footer />}
     </>
   );
 }
