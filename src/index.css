@@ -1,0 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-serif: "Playfair Display", serif;
+
+  --color-cozy-cream: #f6f2e9;
+  --color-cozy-paper: #fffaf0;
+  --color-cozy-sage: #9baa8c;
+  --color-cozy-sage-dark: #718568;
+  --color-cozy-brown: #765b49;
+  --color-cozy-rose: #b77c68;
+  --color-cozy-dark: #394437;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--color-cozy-cream);
+  color: var(--color-cozy-dark);
+  font-family: var(--font-sans);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+::selection {
+  background: #d8c4ae;
+  color: #394437;
+}
