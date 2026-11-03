@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { randomBytes } from "crypto";
 
 import pool from "../config/database.js";
 import { sendEmail } from "../config/mailer.js";
@@ -31,10 +32,16 @@ const REFRESH_DAYS = Math.max(
   Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) || 30
 );
 
+// Generates a code such as LA-4FEBAEA3D7.
+function generateFriendCode() {
+  return `LA-${randomBytes(5).toString("hex").toUpperCase()}`;
+}
+
 function publicUser(user) {
   return {
     id: String(user.id),
     username: user.username,
+    friendCode: user.friend_code,
     email: user.email,
     status: user.status,
     emailVerifiedAt: user.email_verified_at,
@@ -135,6 +142,7 @@ export async function signup(req, res) {
   const passwordHash = await bcrypt.hash(password, 12);
   const code = generateOtp();
   const codeHash = hashOtp(code);
+  const friendCode = generateFriendCode();
 
   const connection = await pool.getConnection();
 
@@ -168,14 +176,15 @@ export async function signup(req, res) {
 
     const [result] = await connection.query(
       `INSERT INTO users
-        (username, email, password_hash, status)
-       VALUES (?, ?, ?, 'pending')`,
-      [username, email, passwordHash]
+        (username, friend_code, email, password_hash, status)
+       VALUES (?, ?, ?, ?, 'pending')`,
+      [username, friendCode, email, passwordHash]
     );
 
     user = {
       id: result.insertId,
       username,
+      friend_code: friendCode,
       email,
       status: "pending",
     };
@@ -200,7 +209,8 @@ export async function signup(req, res) {
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         status: "error",
-        message: "That email or username is already registered.",
+        message:
+          "That email, username, or friend code is already registered. Please try again.",
       });
     }
 
@@ -378,6 +388,7 @@ export async function verifyEmail(req, res) {
       `SELECT
          u.id,
          u.username,
+         u.friend_code,
          u.email,
          u.status,
          u.email_verified_at,
@@ -528,8 +539,15 @@ export async function login(req, res) {
 
   try {
     const [rows] = await pool.query(
-      `SELECT id, username, email, password_hash, status,
-              email_verified_at, created_at
+      `SELECT
+         id,
+         username,
+         friend_code,
+         email,
+         password_hash,
+         status,
+         email_verified_at,
+         created_at
        FROM users
        WHERE email = ?
        LIMIT 1`,
@@ -640,6 +658,7 @@ export async function refreshSession(req, res) {
          s.revoked_at,
          u.id,
          u.username,
+         u.friend_code,
          u.email,
          u.status,
          u.email_verified_at,
@@ -746,8 +765,14 @@ export async function logout(req, res) {
 export async function getCurrentUser(req, res) {
   try {
     const [rows] = await pool.query(
-      `SELECT id, username, email, status,
-              email_verified_at, created_at
+      `SELECT
+         id,
+         username,
+         friend_code,
+         email,
+         status,
+         email_verified_at,
+         created_at
        FROM users
        WHERE id = ?
          AND status = 'active'

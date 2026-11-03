@@ -623,6 +623,16 @@ export default function GetStarted() {
                         )}
                       </button>
                     </div>
+                    {/* back to home button */}
+                    <div className="mt-6 text-center">
+                      <button
+                        type="button"
+                        onClick={() => navigate("/")}
+                        className="text-xs font-bold text-cozy-brown/60 transition-colors hover:text-cozy-dark"
+                      >
+                        Back to Home
+                      </button>
+                    </div>
                   </form>
                 ) : (
                   <form onSubmit={handleSignin}>
@@ -726,6 +736,16 @@ export default function GetStarted() {
                             />
                           </>
                         )}
+                      </button>
+                    </div>
+                    {/* back to home button */}
+                    <div className="mt-6 text-center">
+                      <button
+                        type="button"
+                        onClick={() => navigate("/")}
+                        className="text-xs font-bold text-cozy-brown/60 transition-colors hover:text-cozy-dark"
+                      >
+                        Back to Home
                       </button>
                     </div>
                   </form>

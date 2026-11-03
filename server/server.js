@@ -1,17 +1,26 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createServer } from "http";
 import { fileURLToPath } from "url";
+import path from "path";
 
 import pool from "./config/database.js";
 import { sendEmail, diagnoseMailer } from "./config/mailer.js";
+import { initializeSocket } from "./config/socket.js";
+
 import authRoutes from "./routes/authRoutes.js";
+import houseRoutes from "./routes/houseRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
+import friendRoutes from "./routes/friendRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 dotenv.config({
   path: fileURLToPath(new URL("./.env", import.meta.url)),
 });
 
 const app = express();
+const httpServer = createServer(app);
 
 app.set("trust proxy", 1);
 
@@ -31,6 +40,15 @@ app.use(
 );
 
 app.use(express.json({ limit: "1mb" }));
+
+// Serve uploaded profile pictures.
+app.use(
+  "/uploads",
+  express.static(path.resolve("uploads"), {
+    maxAge: "7d",
+    immutable: true,
+  })
+);
 
 app.get("/", (req, res) => {
   res.json({
@@ -60,6 +78,18 @@ app.get("/api/health", async (req, res) => {
 
 // Authentication endpoints
 app.use("/api/auth", authRoutes);
+
+// House management endpoints
+app.use("/api/houses", houseRoutes);
+
+// Profile endpoints
+app.use("/api/profile", profileRoutes);
+
+// Friends endpoints
+app.use("/api/friends", friendRoutes);
+
+// Messages endpoints
+app.use("/api/messages", messageRoutes);
 
 // Development-only email testing endpoints
 if (process.env.NODE_ENV !== "production") {
@@ -157,8 +187,12 @@ app.use((error, req, res, next) => {
   });
 });
 
+// Initialize Socket.IO before accepting connections.
+initializeSocket(httpServer);
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Cozy Home API running at http://localhost:${PORT}`);
+  console.log(`Cozy Home Socket.IO ready on port ${PORT}`);
 });

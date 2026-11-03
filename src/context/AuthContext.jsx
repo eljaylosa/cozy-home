@@ -22,6 +22,18 @@ export function AuthProvider({ children }) {
     setAccessToken(session.accessToken);
   }, []);
 
+  // Update the authenticated user's information globally.
+  const updateUser = useCallback((updates) => {
+    setUser((currentUser) => {
+      if (!currentUser) return currentUser;
+
+      return {
+        ...currentUser,
+        ...updates,
+      };
+    });
+  }, []);
+
   const clearSession = useCallback(() => {
     setUser(null);
     setAccessToken(null);
@@ -79,6 +91,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: Boolean(user && accessToken),
     setSession,
+    updateUser,
     clearSession,
     refreshSession,
     logout,

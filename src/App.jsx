@@ -4,12 +4,17 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollReveal from "./components/ScrollReveal";
+import PortalLayout from "./components/layout/PortalLayout";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
 import GetStarted from "./pages/GetStarted";
 import EmailTest from "./pages/EmailTest";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import MyHouses from "./pages/MyHouses";
+import Friends from "./pages/Friends";
+import HouseGame from "./pages/HouseGame";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -43,9 +48,21 @@ function App() {
 
   const isAuthPage = location.pathname === "/get-started";
   const isEmailTestPage = location.pathname === "/dev/email-test";
-  const isDashboardPage = location.pathname === "/dashboard";
+  const isHouseGamePage = location.pathname.startsWith("/house/");
 
-  const isStandalonePage = isAuthPage || isEmailTestPage || isDashboardPage;
+  const isPortalPage = [
+    "/dashboard",
+    "/profile",
+    "/my-house",
+    "/friends",
+    "/settings",
+  ].some(
+    (path) =>
+      location.pathname === path || location.pathname.startsWith(`${path}/`)
+  );
+
+  const isStandalonePage =
+    isAuthPage || isEmailTestPage || isPortalPage || isHouseGamePage;
 
   useEffect(() => {
     window.scrollTo({
@@ -61,19 +78,36 @@ function App() {
 
       <div key={location.pathname} className="page-transition">
         <Routes>
+          {/* Public pages */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/get-started" element={<GetStarted />} />
 
+          {/* Protected portal pages */}
           <Route
-            path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <PortalLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-house" element={<MyHouses />} />
+            <Route path="/friends" element={<Friends />} />
+          </Route>
+
+          {/* Protected standalone house game */}
+          <Route
+            path="/house/:houseId"
+            element={
+              <ProtectedRoute>
+                <HouseGame />
               </ProtectedRoute>
             }
           />
 
+          {/* Development only */}
           <Route
             path="/dev/email-test"
             element={
@@ -89,6 +123,7 @@ function App() {
             }
           />
 
+          {/* Not found */}
           <Route
             path="*"
             element={
